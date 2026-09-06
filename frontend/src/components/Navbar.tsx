@@ -19,6 +19,7 @@ function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm">
+
           <Link
             to="/"
             className="text-slate-300 hover:text-white transition"
@@ -32,6 +33,14 @@ function Navbar() {
           >
             Mint Card
           </Link>
+
+          <Link
+            to="/collection"
+            className="text-slate-300 hover:text-white transition"
+          >
+            My Collection
+          </Link>
+
         </div>
 
       </div>

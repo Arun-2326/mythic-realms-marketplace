@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import MyCollectionPage from "./pages/MyCollectionPage";
 import DebugPage from "./pages/DebugPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import MintPage from "./pages/MintPage";
@@ -12,6 +13,7 @@ function App() {
 
         <Routes>
           <Route path="/" element={<MarketplacePage />} />
+          <Route path="/collection" element={<MyCollectionPage />} />
           <Route path="/mint" element={<MintPage />} />
           <Route path="/debug" element={<DebugPage />} />
         </Routes>
