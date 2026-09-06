@@ -1,3 +1,6 @@
+import { useApproveCard } from "./hooks/useApproveCard";
+import { useListCard } from "./hooks/useListCard";
+
 import { useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useListings } from "./hooks/useListings";
@@ -6,6 +9,9 @@ import { uploadImageToIPFS, uploadMetadataToIPFS } from "./services/ipfs";
 import { formatEther } from "viem";
 
 function App() {
+  const { approveCard, isConfirmed: isApproved } = useApproveCard();
+  const { listCard, isPending: isListing, isConfirmed: isListed } = useListCard();
+  const [priceInput, setPriceInput] = useState("0.01");
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
@@ -72,7 +78,35 @@ function App() {
           {error && <p className="text-red-400">Error: {error.message}</p>}
         </div>
       )}
-
+      {isConnected && (
+        <div className="mt-6 text-center bg-slate-800 p-4 rounded">
+          <h2 className="text-xl font-bold mb-2">List Token #0 For Sale</h2>
+          <input
+            type="text"
+            value={priceInput}
+            onChange={(e) => setPriceInput(e.target.value)}
+            className="text-black px-2 py-1 rounded"
+            placeholder="Price in ETH"
+          />
+          <div className="mt-2 flex gap-2 justify-center">
+            <button
+              onClick={() => approveCard(0n)}
+              className="px-3 py-2 bg-blue-600 rounded"
+            >
+              1. Approve
+            </button>
+            <button
+              onClick={() => listCard(0n, priceInput)}
+              className="px-3 py-2 bg-purple-600 rounded"
+            >
+              2. List
+            </button>
+          </div>
+          {isApproved && <p className="text-green-400 text-sm mt-1">Approved ✅</p>}
+          {isListing && <p className="text-yellow-400 text-sm mt-1">Listing...</p>}
+          {isListed && <p className="text-green-400 text-sm mt-1">Listed! ✅</p>}
+        </div>
+      )}
       <div className="mt-8 w-full max-w-md">
         <h2 className="text-xl font-bold mb-2">Active Listings</h2>
         {loading ? (
