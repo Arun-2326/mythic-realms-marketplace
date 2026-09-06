@@ -1,3 +1,4 @@
+import { useBuyCard } from "./hooks/useBuyCard";
 import { useApproveCard } from "./hooks/useApproveCard";
 import { useListCard } from "./hooks/useListCard";
 
@@ -10,6 +11,7 @@ import { formatEther } from "viem";
 
 function App() {
   const { approveCard, isConfirmed: isApproved } = useApproveCard();
+  const { buyCard, isPending: isBuying, isConfirmed: isBought } = useBuyCard();
   const { listCard, isPending: isListing, isConfirmed: isListed } = useListCard();
   const [priceInput, setPriceInput] = useState("0.01");
   const { address, isConnected, chain } = useAccount();
@@ -108,21 +110,31 @@ function App() {
         </div>
       )}
       <div className="mt-8 w-full max-w-md">
-        <h2 className="text-xl font-bold mb-2">Active Listings</h2>
-        {loading ? (
-          <p>Loading listings...</p>
-        ) : listings.length === 0 ? (
-          <p className="text-slate-400">No cards listed yet.</p>
-        ) : (
-          listings.map((l) => (
-            <div key={l.tokenId.toString()} className="bg-slate-800 p-3 rounded mb-2">
-              <p>Token ID: {l.tokenId.toString()}</p>
-              <p>Price: {formatEther(l.price)} ETH</p>
-              <p className="text-xs text-slate-400">Seller: {l.seller}</p>
-            </div>
-          ))
+  <h2 className="text-xl font-bold mb-2">Active Listings</h2>
+  {loading ? (
+    <p>Loading listings...</p>
+  ) : listings.length === 0 ? (
+    <p className="text-slate-400">No cards listed yet.</p>
+  ) : (
+    listings.map((l) => (
+      <div key={l.tokenId.toString()} className="bg-slate-800 p-3 rounded mb-2">
+        <p>Token ID: {l.tokenId.toString()}</p>
+        <p>Price: {formatEther(l.price)} ETH</p>
+        <p className="text-xs text-slate-400">Seller: {l.seller}</p>
+        {address?.toLowerCase() !== l.seller.toLowerCase() && (
+          <button
+            onClick={() => buyCard(l.tokenId, l.price)}
+            className="mt-2 px-3 py-1 bg-green-600 rounded text-sm"
+          >
+            Buy
+          </button>
         )}
       </div>
+    ))
+  )}
+  {isBuying && <p className="text-yellow-400 text-sm mt-1">Confirm purchase in MetaMask...</p>}
+  {isBought && <p className="text-green-400 text-sm mt-1">Purchased! ✅</p>}
+</div>
     </div>
   );
 }
