@@ -3,6 +3,7 @@ import { MARKETPLACE_ADDRESS, marketplaceAbi } from "../config/contracts";
 
 export function useCancelListing() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
+
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
@@ -15,5 +16,11 @@ export function useCancelListing() {
     });
   }
 
-  return { cancelListing, isPending, isConfirming, isConfirmed, error };
+  return {
+    cancelListing,
+    isPending,
+    isConfirming,
+    isConfirmed,
+    error,
+  };
 }
