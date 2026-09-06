@@ -1,25 +1,26 @@
-import { useBuyCard } from "./hooks/useBuyCard";
-import { useApproveCard } from "./hooks/useApproveCard";
-import { useListCard } from "./hooks/useListCard";
-
 import { useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useListings } from "./hooks/useListings";
 import { useMintCard } from "./hooks/useMintCard";
+import { useApproveCard } from "./hooks/useApproveCard";
+import { useListCard } from "./hooks/useListCard";
+import { useBuyCard } from "./hooks/useBuyCard";
+import { useCancelListing } from "./hooks/useCancelListing";
 import { uploadImageToIPFS, uploadMetadataToIPFS } from "./services/ipfs";
 import { formatEther } from "viem";
 
 function App() {
-  const { approveCard, isConfirmed: isApproved } = useApproveCard();
-  const { buyCard, isPending: isBuying, isConfirmed: isBought } = useBuyCard();
-  const { listCard, isPending: isListing, isConfirmed: isListed } = useListCard();
-  const [priceInput, setPriceInput] = useState("0.01");
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { listings, loading } = useListings();
   const { mintCard, isPending, isConfirming, isConfirmed, error } = useMintCard();
+  const { approveCard, isConfirmed: isApproved } = useApproveCard();
+  const { listCard, isPending: isListing, isConfirmed: isListed } = useListCard();
+  const { buyCard, isPending: isBuying, isConfirmed: isBought } = useBuyCard();
+  const { cancelListing, isConfirmed: isCancelled } = useCancelListing();
 
+  const [priceInput, setPriceInput] = useState("0.01");
   const [mintStatus, setMintStatus] = useState("");
 
   async function handleMint(e: React.ChangeEvent<HTMLInputElement>) {
@@ -80,6 +81,7 @@ function App() {
           {error && <p className="text-red-400">Error: {error.message}</p>}
         </div>
       )}
+
       {isConnected && (
         <div className="mt-6 text-center bg-slate-800 p-4 rounded">
           <h2 className="text-xl font-bold mb-2">List Token #0 For Sale</h2>
@@ -109,32 +111,41 @@ function App() {
           {isListed && <p className="text-green-400 text-sm mt-1">Listed! ✅</p>}
         </div>
       )}
+
       <div className="mt-8 w-full max-w-md">
-  <h2 className="text-xl font-bold mb-2">Active Listings</h2>
-  {loading ? (
-    <p>Loading listings...</p>
-  ) : listings.length === 0 ? (
-    <p className="text-slate-400">No cards listed yet.</p>
-  ) : (
-    listings.map((l) => (
-      <div key={l.tokenId.toString()} className="bg-slate-800 p-3 rounded mb-2">
-        <p>Token ID: {l.tokenId.toString()}</p>
-        <p>Price: {formatEther(l.price)} ETH</p>
-        <p className="text-xs text-slate-400">Seller: {l.seller}</p>
-        {address?.toLowerCase() !== l.seller.toLowerCase() && (
-          <button
-            onClick={() => buyCard(l.tokenId, l.price)}
-            className="mt-2 px-3 py-1 bg-green-600 rounded text-sm"
-          >
-            Buy
-          </button>
+        <h2 className="text-xl font-bold mb-2">Active Listings</h2>
+        {loading ? (
+          <p>Loading listings...</p>
+        ) : listings.length === 0 ? (
+          <p className="text-slate-400">No cards listed yet.</p>
+        ) : (
+          listings.map((l) => (
+            <div key={l.tokenId.toString()} className="bg-slate-800 p-3 rounded mb-2">
+              <p>Token ID: {l.tokenId.toString()}</p>
+              <p>Price: {formatEther(l.price)} ETH</p>
+              <p className="text-xs text-slate-400">Seller: {l.seller}</p>
+              {address?.toLowerCase() !== l.seller.toLowerCase() ? (
+                <button
+                  onClick={() => buyCard(l.tokenId, l.price)}
+                  className="mt-2 px-3 py-1 bg-green-600 rounded text-sm"
+                >
+                  Buy
+                </button>
+              ) : (
+                <button
+                  onClick={() => cancelListing(l.tokenId)}
+                  className="mt-2 px-3 py-1 bg-orange-600 rounded text-sm"
+                >
+                  Cancel Listing
+                </button>
+              )}
+            </div>
+          ))
         )}
+        {isBuying && <p className="text-yellow-400 text-sm mt-1">Confirm purchase in MetaMask...</p>}
+        {isBought && <p className="text-green-400 text-sm mt-1">Purchased! ✅</p>}
+        {isCancelled && <p className="text-green-400 text-sm mt-1">Cancelled ✅</p>}
       </div>
-    ))
-  )}
-  {isBuying && <p className="text-yellow-400 text-sm mt-1">Confirm purchase in MetaMask...</p>}
-  {isBought && <p className="text-green-400 text-sm mt-1">Purchased! ✅</p>}
-</div>
     </div>
   );
 }

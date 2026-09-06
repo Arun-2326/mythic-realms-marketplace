@@ -9,7 +9,7 @@ export interface Listing {
 }
 
 const DEPLOYMENT_BLOCK = 11644505n;
-const CHUNK_SIZE = 999n; // stay safely under the 1000-block RPC limit
+const CHUNK_SIZE = 999n;
 
 export function useListings() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -23,7 +23,6 @@ export function useListings() {
 
       const latestBlock = await publicClient.getBlockNumber();
 
-      // Fetch CardListed events in chunks, from deployment to now
       let allLogs: any[] = [];
       let fromBlock = DEPLOYMENT_BLOCK;
 
@@ -43,12 +42,15 @@ export function useListings() {
         fromBlock = toBlock + 1n;
       }
 
-      // For each listed card, check if it's STILL active right now
+      // Get the UNIQUE set of token IDs that have ever been listed
+      const uniqueTokenIds = [
+        ...new Set(allLogs.map((log) => (log.args.tokenId as bigint).toString())),
+      ].map((s) => BigInt(s));
+
+      // For each unique token, check its CURRENT state exactly once
       const activeListings: Listing[] = [];
 
-      for (const log of allLogs) {
-        const tokenId = (log as any).args.tokenId as bigint;
-
+      for (const tokenId of uniqueTokenIds) {
         const listing = (await publicClient.readContract({
           address: MARKETPLACE_ADDRESS,
           abi: marketplaceAbi,
