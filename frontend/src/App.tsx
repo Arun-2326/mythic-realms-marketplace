@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useListings } from "./hooks/useListings";
+import { useMintCard } from "./hooks/useMintCard";
+import { uploadImageToIPFS, uploadMetadataToIPFS } from "./services/ipfs";
 import { formatEther } from "viem";
 
 function App() {
@@ -7,6 +10,32 @@ function App() {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { listings, loading } = useListings();
+  const { mintCard, isPending, isConfirming, isConfirmed, error } = useMintCard();
+
+  const [mintStatus, setMintStatus] = useState("");
+
+  async function handleMint(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !address) return;
+
+    setMintStatus("Uploading image to IPFS...");
+    const imageCid = await uploadImageToIPFS(file);
+
+    setMintStatus("Uploading metadata to IPFS...");
+    const metadataCid = await uploadMetadataToIPFS({
+      name: "Ember Wolf",
+      description: "A fierce fire-elemental wolf.",
+      image: `ipfs://${imageCid}`,
+      attributes: [
+        { trait_type: "Rarity", value: "Rare" },
+        { trait_type: "Element", value: "Fire" },
+        { trait_type: "Attack", value: 72 },
+      ],
+    });
+
+    setMintStatus("Waiting for you to approve the transaction in MetaMask...");
+    mintCard(address, `ipfs://${metadataCid}`);
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center gap-4 text-white p-8">
@@ -30,6 +59,18 @@ function App() {
             Connect {connector.name}
           </button>
         ))
+      )}
+
+      {isConnected && (
+        <div className="mt-6 text-center">
+          <h2 className="text-xl font-bold mb-2">Mint a Test Card</h2>
+          <input type="file" accept="image/*" onChange={handleMint} />
+          <p className="mt-2">{mintStatus}</p>
+          {isPending && <p className="text-yellow-400">Confirm in MetaMask...</p>}
+          {isConfirming && <p className="text-yellow-400">Confirming on Sepolia...</p>}
+          {isConfirmed && <p className="text-green-400">Card minted! ✅</p>}
+          {error && <p className="text-red-400">Error: {error.message}</p>}
+        </div>
       )}
 
       <div className="mt-8 w-full max-w-md">
